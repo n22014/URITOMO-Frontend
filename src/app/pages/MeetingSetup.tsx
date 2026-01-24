@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 
 // 変更点: LiveKitクライアントからトラック作成関数をインポート
 import { createLocalVideoTrack, LocalVideoTrack } from 'livekit-client';
+// ブラウザ用のトークン生成
+import { AccessToken } from 'livekit-server-sdk';
 
 export function MeetingSetup() {
   const { id } = useParams();
@@ -228,8 +230,20 @@ export function MeetingSetup() {
         token = result.token;
         url = result.url;
       } else {
-        console.warn("Electron not detected.");
-        throw new Error("Electron 環境で実行してください。");
+        // ブラウザ環境：環境変数から直接トークンを生成
+        console.log('[MeetingSetup] Browser mode - generating token directly');
+        const apiKey = import.meta.env.VITE_LIVEKIT_API_KEY;
+        const apiSecret = import.meta.env.VITE_LIVEKIT_API_SECRET;
+        const wsUrl = import.meta.env.VITE_LIVEKIT_URL;
+
+        if (!apiKey || !apiSecret || !wsUrl) {
+          throw new Error('LiveKit環境変数が設定されていません (VITE_LIVEKIT_*)');
+        }
+
+        const at = new AccessToken(apiKey, apiSecret, { identity: userName });
+        at.addGrant({ roomJoin: true, room: id || 'default-room', canPublish: true, canSubscribe: true });
+        token = await at.toJwt();
+        url = wsUrl;
       }
 
       if (!token || !url) throw new Error('Token generation failed');

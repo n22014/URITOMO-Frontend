@@ -7,7 +7,6 @@ export default defineConfig(({ command }) => ({
   base: command === 'serve' ? '/' : './',
   plugins: [
     react(),
-    /*
     electron({
       main: {
         entry: 'electron/main.ts',
@@ -28,7 +27,6 @@ export default defineConfig(({ command }) => ({
       },
       renderer: {},
     }),
-    */
   ],
   resolve: {
     alias: {
